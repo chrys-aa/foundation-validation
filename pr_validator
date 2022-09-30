@@ -1,0 +1,44 @@
+#!/usr/bin/python3
+import sys
+import os
+import requests
+import re
+import silk_requester
+
+# token_github = os.getenv("GITHUB_PAS")
+token_github = "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"
+print(f"Token Github utilizado: {token_github}")
+pull_request = sys.argv[1]
+
+headers = { 
+    "Authorization": f"Bearer {token_github}",
+    "Accept": "application/vnd.github+json"
+}
+
+response = requests.get(f"https://api.github.com/repos/chrys-aa/foundation-validation/pulls/{pull_request}",headers=headers)
+
+if response.status_code == 200:
+    response_json = response.json()
+    pr_body = response_json["body"]
+    pr_body.replace("\r\n","")
+    print(f'{pr_body}\n\n')
+
+    DEO4Regex = re.search(r"<DEO4>(.*)</DEO4>", pr_body).group(1)
+    print(f"DEOs identificados no PR: {DEO4Regex}")
+
+    MINIRegex = re.search(r"<MINIREG>(.*)</MINIREG>", pr_body).group(1)
+    print(f"mini-regressivo identificados no PR: {MINIRegex}")
+
+    PACESSRegex = re.search(r"<PACESS>(.*)</PACESS>", pr_body).group(1)
+    print(f"Parecer de acessibilidade identificados no PR: {PACESSRegex}")
+
+    DEO4_IDs = DEO4Regex.split(";")
+
+    for deo in DEO4_IDs:
+        print(f'Processando DEO {deo}')
+        silk_requester.silko(deo)
+        #silkRequest = requests.get("SILKO")
+        #SilkPlanResponse = silkRequest.json()
+
+
+

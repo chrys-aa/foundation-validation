@@ -1,0 +1,49 @@
+#!/usr/bin/python3
+import sys
+import os
+import re
+import github_requester
+import deo_validator
+import minireg_validator
+import paccess_validator
+import pr_extractor
+import response_creator
+import json
+import uuid
+
+pathParameters = {
+    "pull_request":"1",
+    "platform":"android",
+    "release":"1.115.x"
+    }
+def main():
+    try:
+        requestId = str(uuid.uuid4())
+        print(f"RequestId: {requestId}")
+        response_creator.setRequestId(requestId)
+        
+        platform = pathParameters['platform']
+        pr_number = pathParameters['pull_request']
+        release_number = pathParameters['release']
+
+        pr_body = github_requester.getPRInfo(platform, pr_number)
+
+        DEOs = pr_extractor.extractDEOs(pr_body)
+        minireg = pr_extractor.extractMinireg(pr_body)
+        paccess = pr_extractor.extractPAccess(pr_body)
+
+        deo_validator.processDEOs(DEOs, release_number)
+        minireg_validator.processMinireg(minireg, release_number)
+        paccess_validator.processPaccess(paccess, release_number)
+
+        print(json.dumps(response_creator.getResponse(), ensure_ascii=False).encode('utf8').decode('utf8'))
+    except Exception as e:
+        print(json.dumps(response_creator.genericErrorResponse(e), ensure_ascii=False).encode('utf8').decode('utf8'))
+        raise e
+
+main()
+
+
+    
+    
+

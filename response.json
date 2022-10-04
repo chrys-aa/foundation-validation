@@ -1,0 +1,35 @@
+{
+    "recommendation": "DO_NOT_MERGE",
+    "pr_validation": {
+        "DEO4": {
+            "identified_DEOs": "123123;12312;141",
+            "validation": [
+                {
+                    "DEO": "123123",
+                    "status": "OK",
+                },
+                {
+                    "DEO": "12312",
+                    "status": "FAILED",
+                    "reasons": [
+                        "reason1",
+                        "reason2",
+                        "reason3"
+                    ]
+                }
+            ]
+        },
+        "mini-reg": {
+            "identified": "123654",
+            "status": "OK",
+            "reasons": []
+        },
+        "acessibilidade": {
+            "identified": "123654",
+            "status": "FAILED",
+            "reasons": [
+                "RUIM"
+            ]
+        }
+    }
+}

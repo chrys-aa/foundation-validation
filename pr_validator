@@ -1,44 +1,49 @@
 #!/usr/bin/python3
 import sys
 import os
-import requests
 import re
-import silk_requester
+import github_requester
+import deo_validator
+import minireg_validator
+import paccess_validator
+import pr_extractor
+import response_creator
+import json
+import uuid
 
-# token_github = os.getenv("GITHUB_PAS")
-token_github = "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"
-print(f"Token Github utilizado: {token_github}")
-pull_request = sys.argv[1]
+pathParameters = {
+    "pull_request":"1",
+    "platform":"android",
+    "release":"1.115.x"
+    }
+def main():
+    try:
+        requestId = str(uuid.uuid4())
+        print(f"RequestId: {requestId}")
+        response_creator.setRequestId(requestId)
+        
+        platform = pathParameters['platform']
+        pr_number = pathParameters['pull_request']
+        release_number = pathParameters['release']
 
-headers = { 
-    "Authorization": f"Bearer {token_github}",
-    "Accept": "application/vnd.github+json"
-}
+        pr_body = github_requester.getPRInfo(platform, pr_number)
 
-response = requests.get(f"https://api.github.com/repos/chrys-aa/foundation-validation/pulls/{pull_request}",headers=headers)
+        DEOs = pr_extractor.extractDEOs(pr_body)
+        minireg = pr_extractor.extractMinireg(pr_body)
+        paccess = pr_extractor.extractPAccess(pr_body)
 
-if response.status_code == 200:
-    response_json = response.json()
-    pr_body = response_json["body"]
-    pr_body.replace("\r\n","")
-    print(f'{pr_body}\n\n')
+        deo_validator.processDEOs(DEOs, release_number)
+        minireg_validator.processMinireg(minireg, release_number)
+        paccess_validator.processPaccess(paccess, release_number)
 
-    DEO4Regex = re.search(r"<DEO4>(.*)</DEO4>", pr_body).group(1)
-    print(f"DEOs identificados no PR: {DEO4Regex}")
+        print(json.dumps(response_creator.getResponse(), ensure_ascii=False).encode('utf8').decode('utf8'))
+    except Exception as e:
+        print(json.dumps(response_creator.genericErrorResponse(e), ensure_ascii=False).encode('utf8').decode('utf8'))
+        raise e
 
-    MINIRegex = re.search(r"<MINIREG>(.*)</MINIREG>", pr_body).group(1)
-    print(f"mini-regressivo identificados no PR: {MINIRegex}")
-
-    PACESSRegex = re.search(r"<PACESS>(.*)</PACESS>", pr_body).group(1)
-    print(f"Parecer de acessibilidade identificados no PR: {PACESSRegex}")
-
-    DEO4_IDs = DEO4Regex.split(";")
-
-    for deo in DEO4_IDs:
-        print(f'Processando DEO {deo}')
-        silk_requester.silko(deo)
-        #silkRequest = requests.get("SILKO")
-        #SilkPlanResponse = silkRequest.json()
+main()
 
 
+    
+    
 
